@@ -6,66 +6,30 @@
 2) you will need a sysdig api-key
    1) You can get this by logging into sysdig-secure here https://us2.app.sysdig.com/secure/#/settings/user and get the api-key, this will be used later
 
+You will need to log into quay with the username/password that is in the pull secret that you downloaded in step 1. In order to do this we will extract the generated username/password from the pull-secret and then manually log into quay with this secret. 
 
+NOTE: If you are using a Linux box for this, you can manually update the ~/.docker/config.json with the login information from the pull secret. Windows machines and OSX machines use a seperate keystore and the password must be added via the docker command.
 
-## Steps - New
+### Log in to Quay.io
 
-docker pull quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994
-docker save quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994 -o image.tar
-docker run --rm \
-    -v ${PWD}/image.tar:/tmp/image.tar \
-    quay.io/sysdig/secure-inline-scan:2 \
-    --sysdig-url https://us2.app.sysdig.com \
-    --sysdig-token 082c6c5e-80dc-4703-ad0f-dfe76e7c93d6 \
-    --storage-type docker-archive \
-    --storage-path /tmp/image.tar \
-    quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994
-
-## Steps
-
-OCP_RELEASE=4.6.47
-PRODUCT_REPO='openshift-release-dev'
-LOCAL_SECRET_JSON='pull-secret'
-RELEASE_NAME="ocp-release"
-ARCHITECTURE=x86_64
-LOCAL_REGISTRY='afactory.ocp4.xphyrlab.net:443'
-LOCAL_REPOSITORY='ocp4'
+Run the following command to extract the quay username/password from the pull secret:
 
 ```
-$ oc46 adm release mirror -a ${LOCAL_SECRET_JSON}  \
-     --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE}-${ARCHITECTURE} \
-     --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
-     --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}-${ARCHITECTURE} --dry-run
+jq '.auths."quay.io".auth' pull-secret | tr -d '"' | base64 -d
 ```
 
+This will output a username password in the format \<username\>:\<password\>
 
-docker run \
-    -u root --privileged \
-    -v /var/lib/containers:/var/lib/containers \
-    quay.io/sysdig/secure-inline-scan:2 \
-    --storage-type cri-o \
-    --sysdig-token 082c6c5e-80dc-4703-ad0f-dfe76e7c93d6 \
-    --sysdig-url https://us2.app.sysdig.com \
-    localhost/quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994
+Use the docker command and login to quay copy and paste the username and password from the output above
 
-podman run \
-    -u root --privileged \
-    -v /var/lib/containers:/var/lib/containers \
-    quay.io/sysdig/secure-inline-scan:2 \
-    --storage-type cri-o \
-    --sysdig-token 082c6c5e-80dc-4703-ad0f-dfe76e7c93d6 \
-    --sysdig-url https://us2.app.sysdig.com \
-    localhost/quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994
+```
+$ docker login -u \<username\> -p \<password\> quay.io
+```
 
-### OSX
-docker run --rm \
-    -v /var/run/docker.sock.raw:/var/run/docker.sock \
-    quay.io/sysdig/secure-inline-scan:2 \
-    --sysdig-url https://us2.app.sysdig.com \
-    --sysdig-token 082c6c5e-80dc-4703-ad0f-dfe76e7c93d6 \
-    --storage-type docker-daemon \
-    --storage-path /var/run/docker.sock \
-    openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994
+Ensure that login is succesful before proceeding.
+
+## Run the script
+
 
 
 ## References

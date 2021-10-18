@@ -9,7 +9,7 @@ OCP_RELEASE=4.6.47
 SYSDIG_URL=https://us2.app.sysdig.com
 SYSDIG_TOKEN=082c6c5e-80dc-4703-ad0f-dfe76e7c93d6
 ARCHITECTURE=x86_64
-MINIMIZE_DISK_USAGE=Y
+CONTAINER_CLEANUP=Y
 
 # Generate a temp file for download
 RELEASE_FILE=$(mktemp -t release)
@@ -35,8 +35,8 @@ scan_container_images () {
         docker run --rm \
         -v ${CONTAINER_IMAGE}:/tmp/image.tar \
         quay.io/sysdig/secure-inline-scan:2 \
-        --sysdig-url https://us2.app.sysdig.com \
-        --sysdig-token 082c6c5e-80dc-4703-ad0f-dfe76e7c93d6 \
+        --sysdig-url ${SYSDIG_URL} \
+        --sysdig-token ${SYSDIG_TOKEN} \
         --storage-type docker-archive \
         --storage-path /tmp/image.tar \
         quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c7779c311b248e5ece4b5aef8fadd4b828c02bb35065812be5bb589f69bea994
@@ -47,9 +47,10 @@ scan_container_images () {
 clean_temp_files () {
     rm ${MANIFEST_FILE}
     rm ${RELEASE_FILE}
+    return 0
 }
 
 
 get_manifests
-
+scan_container_images
 clean_temp_files
